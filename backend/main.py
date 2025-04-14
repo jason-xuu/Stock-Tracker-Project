@@ -26,3 +26,8 @@ def download(ticker: str):
         return FileResponse(path, filename=f"{ticker}.csv")
     except:
         raise HTTPException(status_code=404, detail="File not found")
+
+@app.get("/market-state")
+def market_state():
+    from stock_data import evaluate_market_state
+    return evaluate_market_state()

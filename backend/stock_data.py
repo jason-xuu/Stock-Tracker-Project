@@ -3,8 +3,9 @@ import shutil
 import pandas as pd
 import yfinance as yf
 import requests
+import numpy as np
 from io import StringIO
-from datetime import datetime
+from datetime import datetime, timedelta
 
 DATA_DIR = "backend/data"
 ARCHIVE_DIR = "backend/archive"
@@ -23,8 +24,11 @@ def download_stock_data(ticker):
     try:
         data = yf.download(ticker, period="2y", interval="1d", progress=False)
         if not data.empty:
+            data.reset_index(inplace=True)  # ✅ Make sure 'Date' becomes a column
             csv_path = os.path.join(DATA_DIR, f"{ticker}.csv")
-            data.to_csv(csv_path)
+            data.to_csv(csv_path, index=False)
+        else:
+            print(f"No data for {ticker}, skipping.")
     except Exception as e:
         print(f"Error fetching {ticker}: {e}")
 
@@ -46,7 +50,17 @@ def cleanup_old_archives(keep_last=6):
 def fetch_and_update_data():
     archive_if_needed()
     cleanup_old_archives()
-    for ticker in fetch_nasdaq_tickers()[:100]:
+
+    tickers = fetch_nasdaq_tickers()
+
+    # ✅ Always download these popular tickers
+    must_have = ["AAPL", "MSFT", "GOOGL", "AMZN", "NVDA", "TSLA", "META", "NFLX", "AMD", "INTC"]
+    for ticker in must_have:
+        if ticker in tickers:
+            download_stock_data(ticker)
+
+    # Then download more tickers (up to 100 or all)
+    for ticker in tickers[:100]:
         download_stock_data(ticker)
 
 def get_all_tickers():
@@ -55,8 +69,18 @@ def get_all_tickers():
 def get_price_data(ticker):
     path = os.path.join(DATA_DIR, f"{ticker}.csv")
     if not os.path.exists(path):
+        print(f"❌ File not found: {path}")
         return None
+
     df = pd.read_csv(path)
+
+    # Drop rows with NaNs and replace infs with None
+    df = df.replace([np.inf, -np.inf], np.nan).dropna()
+
+    if "Date" not in df.columns or "Close" not in df.columns:
+        print(f"❌ Missing columns in {ticker}: {df.columns.tolist()}")
+        return None
+
     return {
         "dates": df["Date"].tolist(),
         "close": df["Close"].tolist(),
