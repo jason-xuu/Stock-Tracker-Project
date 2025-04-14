@@ -2,3 +2,6 @@ echo "venv/" >> .gitignore
 echo "*.csv" >> .gitignore
 echo "__pycache__/" >> .gitignore
 echo ".DS_Store" >> .gitignore
+# .gitignore
+node_modules/
+.cache/
