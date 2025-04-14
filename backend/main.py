@@ -1,6 +1,10 @@
+import os
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
 from stock_data import get_all_tickers, get_price_data, fetch_and_update_data
+from dotenv import load_dotenv
+
+load_dotenv()
 
 app = FastAPI()
 

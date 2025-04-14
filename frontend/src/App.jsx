@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import TickerDropdown from './components/TickerDropdown';
+import MarketState from './components/MarketState';
 import ChartView from './components/ChartView';
 import axios from 'axios';
 
@@ -26,6 +27,9 @@ function App() {
       {selected && (
         <a href={`/download/${selected}`} className="btn btn-success mt-3">Download CSV</a>
       )}
+
+      {/* 🔮 Market overview box + news panel */}
+      <MarketState />
     </div>
   );
 }
