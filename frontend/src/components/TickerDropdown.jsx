@@ -1,8 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
-const TickerDropdown = ({ options, onChange }) => {
+const TickerDropdown = ({ options }) => {
   const [input, setInput] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
+  const dropdownRef = useRef(null);
+  const navigate = useNavigate();
 
   const popularTickers = ["AAPL", "MSFT", "GOOGL", "AMZN", "NVDA", "TSLA", "META", "NFLX", "AMD", "INTC"];
 
@@ -11,13 +14,24 @@ const TickerDropdown = ({ options, onChange }) => {
     : popularTickers;
 
   const handleSelect = (ticker) => {
-    setInput(ticker);
-    onChange(ticker);
+    setInput('');
     setShowDropdown(false);
+    navigate(`/stock/${ticker}`);
   };
 
+  // Hide dropdown if clicked outside
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setShowDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   return (
-    <div className="position-relative">
+    <div className="position-relative" ref={dropdownRef}>
       <input
         type="text"
         className="form-control"

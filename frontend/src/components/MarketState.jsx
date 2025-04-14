@@ -7,7 +7,7 @@ const MarketState = () => {
 
   useEffect(() => {
     axios.get("/market-state").then(res => {
-      console.log("Market response:", res.data);
+      console.log("📈 Market response:", res.data);
       setState(res.data.state);
       setNews(res.data.news);
     });
@@ -42,17 +42,28 @@ const MarketState = () => {
     return "🔍 Market Unclear";
   };
 
-  const formatAlphaVantageDate = (dateStr) => {
-    if (!dateStr || dateStr.length < 15) return "Unknown";
-    const year = dateStr.slice(0, 4);
-    const month = dateStr.slice(4, 6);
-    const day = dateStr.slice(6, 8);
-    const hour = dateStr.slice(9, 11);
-    const minute = dateStr.slice(11, 13);
-    const second = dateStr.slice(13, 15);
-    const formatted = `${year}-${month}-${day}T${hour}:${minute}:${second}`;
-    const date = new Date(formatted);
-    return date.toLocaleString();
+  const getSentimentStyle = (title) => {
+    const lower = title.toLowerCase();
+    const bullish = ["rally", "boom", "optimism", "growth", "gain", "surge", "recovery", "bullish", "spike"];
+    const bearish = ["recession", "crash", "inflation", "sell-off", "tariffs", "downturn", "decline", "fear", "plunge", "jobless"];
+
+    if (bullish.some(kw => lower.includes(kw))) {
+      return { backgroundColor: "#d4edda", color: "#155724" };
+    }
+    if (bearish.some(kw => lower.includes(kw))) {
+      return { backgroundColor: "#f8d7da", color: "#721c24" };
+    }
+    return { backgroundColor: "#fdfdfe", color: "#333" };
+  };
+
+  const getSentimentTooltip = (title) => {
+    const lower = title.toLowerCase();
+    const bullish = ["rally", "boom", "optimism", "growth", "gain", "surge", "recovery", "bullish", "spike"];
+    const bearish = ["recession", "crash", "inflation", "sell-off", "tariffs", "downturn", "decline", "fear", "plunge", "jobless"];
+
+    if (bullish.some(kw => lower.includes(kw))) return "Positive Sentiment";
+    if (bearish.some(kw => lower.includes(kw))) return "Negative Sentiment";
+    return "Neutral Sentiment";
   };
 
   return (
@@ -63,7 +74,11 @@ const MarketState = () => {
         <div className="row">
           {news.map((article, idx) => (
             <div className="col-md-6 mb-3" key={idx}>
-              <div className="card" style={{ height: "220px", overflow: "hidden" }}>
+              <div
+                className="card"
+                style={{ height: "220px", overflow: "hidden", ...getSentimentStyle(article.title) }}
+                title={getSentimentTooltip(article.title)}
+              >
                 {article.image ? (
                   <img
                     src={article.image}
@@ -72,15 +87,17 @@ const MarketState = () => {
                     style={{ height: "100px", objectFit: "cover" }}
                   />
                 ) : (
-                  <div style={{
-                    height: "100px",
-                    backgroundColor: "#f0f0f0",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: "0.9rem",
-                    color: "#888"
-                  }}>
+                  <div
+                    style={{
+                      height: "100px",
+                      backgroundColor: "#f0f0f0",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontSize: "0.9rem",
+                      color: "#888"
+                    }}
+                  >
                     📰 No Image
                   </div>
                 )}
@@ -96,7 +113,9 @@ const MarketState = () => {
                     {article.title}
                   </a>
                   <p className="text-muted mb-0" style={{ fontSize: "0.75rem" }}>
-                    {formatAlphaVantageDate(article.publishedAt)}
+                    {article.publishedAt && !isNaN(new Date(article.publishedAt)) 
+                      ? new Date(article.publishedAt).toLocaleString()
+                      : "Unknown Date"}
                   </p>
                 </div>
               </div>

@@ -90,51 +90,79 @@ def get_price_data(ticker):
         "volume": df["Volume"].tolist()
     }
 
+def format_alpha_date(raw):
+    """Convert Alpha Vantage's timestamp format to ISO 8601"""
+    try:
+        return datetime.strptime(raw, "%Y%m%dT%H%M%S").isoformat()
+    except Exception as e:
+        print("❌ Date format error:", e)
+        return None
+
 def fetch_market_news():
-    import requests
-    from datetime import datetime, timedelta
-    import os
+    import requests, os, urllib
 
-    API_KEY = os.getenv("ALPHA_VANTAGE_KEY")
-    base_url = "https://www.alphavantage.co/query"
-    function = "NEWS_SENTIMENT"
-    tickers = "AAPL,MSFT,NVDA"
-    sort = "LATEST"
-    limit = 10
-    time_from = (datetime.now() - timedelta(days=3)).strftime("%Y%m%dT%H%M")
+    alpha_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    newsapi_key = os.getenv("NEWS_API_KEY")
 
-    query_url = (
-        f"{base_url}?function={function}"
-        f"&tickers={tickers}"
-        f"&sort={sort}"
-        f"&limit={limit}"
-        f"&time_from={time_from}"
-        f"&apikey={API_KEY}"
+    # ✅ Alpha Vantage query
+    av_url = (
+        f"https://www.alphavantage.co/query?function=NEWS_SENTIMENT"
+        f"&tickers=AAPL,MSFT,GOOGL,NVDA,TSLA,SPY"
+        f"&topics=financial_markets,economy_macro,economy_monetary"
+        f"&sort=RELEVANCE&limit=6&apikey={alpha_key}"
     )
 
     try:
-        response = requests.get(query_url)
-        print("API response status:", response.status_code)
+        av_response = requests.get(av_url)
+        print("🔗 AV Request URL:", av_url)
+        print("✅ AV Status:", av_response.status_code)
 
-        data = response.json()
-        print("News API Response (preview):", data.get("feed", [])[:1])
+        av_data = av_response.json()
+        articles = av_data.get("feed", [])
+        print("📦 AV Feed Preview:", articles[:1])
 
-        articles = data.get("feed", [])[:4]  # Get top 4
+        if articles:
+            return [
+                {
+                    "title": article["title"],
+                    "url": article["url"],
+                    "image": article.get("banner_image", ""),
+                    "publishedAt": format_alpha_date(article["time_published"])
+                }
+                for article in articles[:4]
+            ]
+    except Exception as e:
+        print("❌ Alpha Vantage Error:", e)
+
+    # 🔁 NewsAPI fallback
+    try:
+        query = urllib.parse.quote(
+            "(stock market OR S&P 500 OR economy OR inflation OR recession OR interest rates OR GDP OR federal reserve) "
+            "AND (crash OR rally OR correction OR surge OR volatility OR slowdown)"
+        )
+        newsapi_url = (
+            f"https://newsapi.org/v2/everything?q={query}&"
+            f"language=en&sortBy=publishedAt&pageSize=4&apiKey={newsapi_key}"
+        )
+
+        news_response = requests.get(newsapi_url)
+        print("🌐 NewsAPI Status:", news_response.status_code)
+
+        news_data = news_response.json()
+        print("📰 NewsAPI Feed Preview:", news_data.get("articles", [])[:1])
+
         return [
             {
                 "title": a["title"],
                 "url": a["url"],
-                "image": a.get("banner_image") or "",
-                "publishedAt": a["time_published"]
+                "image": a.get("urlToImage", ""),
+                "publishedAt": a["publishedAt"]
             }
-            for a in articles if "title" in a
+            for a in news_data.get("articles", [])[:4]
         ]
     except Exception as e:
-        print("Error fetching from Alpha Vantage:", e)
+        print("❌ NewsAPI Error:", e)
         return []
-
-
-
 
 def evaluate_market_state():
     from datetime import datetime, timedelta
