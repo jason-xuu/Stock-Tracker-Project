@@ -1,6 +1,8 @@
-# Stock Tracker Dashboard
+# 📈 Stock Tracker Dashboard
 
 An intelligent, interactive stock tracking platform built with **React**, **Tailwind CSS**, and **FastAPI** — featuring real-time data, sentiment-based market analysis, and dynamic ticker fetching via `yfinance`.
+
+> **Live Demo:** [https://stock-tracker-frontend.onrender.com](https://stock-tracker-frontend.onrender.com)
 
 ---
 
@@ -55,29 +57,20 @@ FastAPI handles routing, ticker management, and dynamic data fetching from:
 ---
 
 ## Project Structure
-📁 frontend/ ├── React UI │ ├── Dashboard.jsx │ ├── TickerDropdown.jsx │ ├── MarketState.jsx │ └── StockPage.jsx
 
-📁 backend/ ├── FastAPI Server │ ├── main.py │ ├── stock_data.py │ └── scripts/
+```txt
+📁 frontend/
+│   └── React UI
+│       ├── Dashboard.jsx
+│       ├── TickerDropdown.jsx
+│       ├── MarketState.jsx
+│       └── StockPage.jsx
 
-📁 backend/data/ └── CSV files for each cached stock ticker
+📁 backend/
+│   └── FastAPI Server
+│       ├── main.py
+│       ├── stock_data.py
+│       └── scripts/
 
-## How to Run Locally
-
-1. **Clone the repo**
-   ```bash
-   git clone https://github.com/yourusername/stock-tracker-dashboard
-   
-2. **Start the backend**
-```bash
-Copy
-Edit
-cd backend
-uvicorn main:app --reload
-
-3. **Start the frontend**
-```bash
-Copy
-Edit
-cd ../frontend
-npm install
-npm start
+📁 backend/data/
+└── CSV files for each cached stock ticker
