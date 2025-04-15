@@ -7,10 +7,12 @@ import numpy as np
 import urllib.parse
 from io import StringIO
 from datetime import datetime, timedelta
+import csv
 
 ALPHA_VANTAGE_API_KEY = os.getenv("ALPHA_VANTAGE_API_KEY")
 
 DATA_DIR = "backend/data"
+DATA_DIR = os.path.join("backend", "data")
 ARCHIVE_DIR = "backend/archive"
 
 os.makedirs(DATA_DIR, exist_ok=True)
@@ -76,19 +78,37 @@ def get_price_data(ticker):
         return None
 
     df = pd.read_csv(path)
-
-    # Drop rows with NaNs and replace infs with None
     df = df.replace([np.inf, -np.inf], np.nan).dropna()
 
-    if "Date" not in df.columns or "Close" not in df.columns:
-        print(f"Missing columns in {ticker}: {df.columns.tolist()}")
-        return None
+    # Normalize column names to lowercase for consistency
+    df.columns = [col.lower() for col in df.columns]
 
-    return {
-        "dates": df["Date"].tolist(),
-        "close": df["Close"].tolist(),
-        "volume": df["Volume"].tolist()
-    }
+    # Minimal format (SPY or custom manual files): timestamp + close
+    if "timestamp" in df.columns and "close" in df.columns:
+        return {
+            "dates": df["timestamp"].tolist(),
+            "close": df["close"].tolist(),
+            "open": [],
+            "high": [],
+            "low": [],
+            "volume": []
+        }
+
+    # Full OHLCV data
+    expected = ["date", "open", "high", "low", "close", "volume"]
+    if all(col in df.columns for col in expected):
+        return {
+            "dates": df["date"].tolist(),
+            "open": df["open"].tolist(),
+            "high": df["high"].tolist(),
+            "low": df["low"].tolist(),
+            "close": df["close"].tolist(),
+            "volume": df["volume"].tolist()
+        }
+
+    # Still no match? Log available columns and fail gracefully
+    print(f"❌ Missing expected columns in {ticker}. Found: {df.columns.tolist()}")
+    return None
 
 def format_alpha_date(raw):
     """Convert Alpha Vantage's timestamp format to ISO 8601"""
@@ -172,9 +192,7 @@ def evaluate_market_state():
     end = datetime.now()
     start = end - timedelta(days=30)
 
-    gainers = 0
-    losers = 0
-
+    price_changes = []
     for ticker in tickers:
         try:
             df = yf.download(ticker, start=start, end=end, progress=False)
@@ -182,12 +200,12 @@ def evaluate_market_state():
             if not df.empty:
                 start_price = df["Close"].iloc[0]
                 end_price = df["Close"].iloc[-1]
-                if float(end_price.iloc[0]) > float(start_price.iloc[0]):
-                    gainers += 1
-                else:
-                    losers += 1
+                change_pct = ((end_price - start_price) / start_price) * 100
+                price_changes.append(float(change_pct))
         except Exception as e:
             print(f"Failed to get data for {ticker}: {e}")
+
+    avg_trend_pct = float(sum(price_changes)) / len(price_changes) if price_changes else 0
 
     # Fetch news and analyze sentiment
     news = fetch_market_news()
@@ -203,21 +221,53 @@ def evaluate_market_state():
         elif any(kw in title for kw in bearish_keywords):
             news_sentiment -= 1
 
-    print(f"📊 Price trend: {gainers} up vs {losers} down")
+    print(f"Avg Trend %: {avg_trend_pct:.2f}")
     print(f"🧠 News sentiment score: {news_sentiment}")
 
-    # Combine both signals to decide market state
-    if gainers == 0 and losers == 0:
-        state = "neutral"
-    elif gainers > losers and news_sentiment >= 0:
+    # Determine market state
+    if avg_trend_pct > 2 and news_sentiment >= 0:
         state = "bull"
-    elif losers > gainers and news_sentiment <= 0:
+    elif avg_trend_pct < -2 and news_sentiment <= 0:
         state = "bear"
     else:
         state = "neutral"
 
     return {
         "state": state,
+        "trendPct": avg_trend_pct,
+        "sentiment": news_sentiment,
         "news": news
     }
 
+def download_ticker_data(ticker: str) -> bool:
+    try:
+        df = yf.download(ticker, period="6mo", interval="1d", progress=False)
+        if not df.empty:
+            os.makedirs(DATA_DIR, exist_ok=True)
+            df.to_csv(os.path.join(DATA_DIR, f"{ticker.upper()}.csv"))
+            return True
+        return False
+    except Exception as e:
+        print(f"Failed to fetch data for {ticker}: {e}")
+        return False
+
+def find_ticker_in_master(ticker: str) -> dict:
+    """
+    Searches for the given ticker in the tickers_master.csv file.
+
+    Returns:
+        dict: Dictionary with the ticker's info if found, else None.
+    """
+    path = os.path.join("backend", "data", "tickers_master.csv")
+    ticker = ticker.upper()
+    try:
+        with open(path, newline='', encoding='utf-8') as csvfile:
+            reader = csv.DictReader(csvfile)
+            for row in reader:
+                if row['Symbol'].upper() == ticker:
+                    return row
+    except FileNotFoundError:
+        print(f"❌ File not found: {path}")
+    except Exception as e:
+        print(f"❌ Error reading {path}: {e}")
+    return None

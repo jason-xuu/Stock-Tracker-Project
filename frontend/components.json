@@ -1,0 +1,20 @@
+{
+    "$schema": "https://ui.shadcn.com/schema.json",
+    "name": "stock-dashboard",
+    "project": {
+      "type": "react"
+    },
+    "components": {
+      "directory": "src/components/ui"
+    },
+    "aliases": {
+      "@": "./src"
+    },
+    "tailwind": {
+      "config": "tailwind.config.js",
+      "css": "src/index.css",
+      "baseColor": "zinc",
+      "cssVariables": true
+    }
+  }
+  
