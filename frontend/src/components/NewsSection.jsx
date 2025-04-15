@@ -1,12 +1,12 @@
 // src/components/NewsSection.jsx
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../api";
 
 const NewsSection = () => {
   const [news, setNews] = useState([]);
 
   useEffect(() => {
-    axios.get("/news")
+    api.get("/news")
       .then(res => setNews(res.data))
       .catch(err => console.error("News fetch error:", err));
   }, []);

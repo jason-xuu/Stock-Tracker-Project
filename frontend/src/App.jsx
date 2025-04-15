@@ -3,13 +3,13 @@ import { Routes, Route } from 'react-router-dom';
 import Dashboard from './components/Dashboard';
 import StockPage from './components/StockPage';
 import Navbar from './components/Navbar';
-import axios from 'axios';
+import api from './api';
 
 const App = () => {
   const [tickers, setTickers] = useState([]);
 
   useEffect(() => {
-    axios.get('/tickers')
+    api.get('/tickers')
       .then(res => setTickers(res.data))
       .catch(err => console.error(err));
   }, []);

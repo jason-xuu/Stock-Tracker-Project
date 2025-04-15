@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import api from '../api';
 import { ArrowTrendingUpIcon, ArrowTrendingDownIcon, ChartBarIcon } from '@heroicons/react/24/solid';
 
 const MarketState = () => {
@@ -8,7 +8,7 @@ const MarketState = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await axios.get('/market-state');
+        const res = await api.get('/market-state'); 
         setState(res.data);
       } catch (err) {
         console.error("Failed to fetch market state:", err);

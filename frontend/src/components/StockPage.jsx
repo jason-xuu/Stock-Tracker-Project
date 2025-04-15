@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../api';
 import ChartView from './ChartView';
 
 const StockPage = () => {
@@ -10,7 +10,7 @@ const StockPage = () => {
 
   useEffect(() => {
     if (ticker) {
-      axios.get(`/prices/${ticker}`)
+      api.get(`/prices/${ticker}`)
         .then(res => setChartData(res.data))
         .catch(err => console.error(err));
 
