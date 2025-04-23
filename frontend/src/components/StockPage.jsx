@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../api';
 import ChartView from './ChartView';
+import { BASE_URL } from "../api";
 
 const StockPage = () => {
   const { ticker } = useParams();
@@ -51,12 +52,12 @@ const StockPage = () => {
 
         {/* Buttons */}
         <div className="flex justify-center gap-4 pt-2">
-          <a
-            href={`/download/${ticker}`}
-            className="btn btn-primary btn-md"
-          >
-            Download CSV
-          </a>
+        <a
+          href={`${BASE_URL}/download/${ticker}`}
+          className="btn btn-primary btn-md"
+        >
+          Download CSV
+        </a>
           <button
             onClick={() => navigate('/')}
             className="btn btn-outline btn-md"
