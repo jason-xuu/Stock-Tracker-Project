@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 from fastapi.middleware.cors import CORSMiddleware
 from stock_data import evaluate_market_state
 from fastapi import HTTPException
-from stock_data import download_ticker_data
+from stock_data import download_ticker_data, find_ticker_in_master
 
 load_dotenv()
 

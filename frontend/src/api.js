@@ -1,8 +1,11 @@
+// src/api.js
 import axios from "axios";
 
-// Set base URL for Render backend
-const api = axios.create({
-  baseURL: "https://stock-tracker-backend-trk4.onrender.com",
-});
+const baseURL =
+  process.env.NODE_ENV === "development"
+    ? "http://localhost:8000"
+    : "https://stock-tracker-backend-trk4.onrender.com";
+
+const api = axios.create({ baseURL });
 
 export default api;

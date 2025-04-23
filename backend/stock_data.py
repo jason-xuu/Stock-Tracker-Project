@@ -243,13 +243,17 @@ def download_ticker_data(ticker: str) -> bool:
     try:
         df = yf.download(ticker, period="6mo", interval="1d", progress=False)
         if not df.empty:
+            df.reset_index(inplace=True)  # Add Date as a column
+            df.rename(columns=str.title, inplace=True)  # Make columns like 'Open', 'Close', etc.
+
             os.makedirs(DATA_DIR, exist_ok=True)
-            df.to_csv(os.path.join(DATA_DIR, f"{ticker.upper()}.csv"))
+            df.to_csv(os.path.join(DATA_DIR, f"{ticker.upper()}.csv"), index=False)
             return True
         return False
     except Exception as e:
         print(f"Failed to fetch data for {ticker}: {e}")
         return False
+
 
 def find_ticker_in_master(ticker: str) -> dict:
     """

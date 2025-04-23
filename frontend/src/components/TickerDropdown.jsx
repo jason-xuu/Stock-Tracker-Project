@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import api from '../api'; // Import shared Axios instance
 
 const TickerDropdown = ({ options: initialOptions }) => {
   const [input, setInput] = useState('');
@@ -19,14 +20,10 @@ const TickerDropdown = ({ options: initialOptions }) => {
       if (tickerOptions.includes(ticker.toUpperCase())) {
         navigate(`/stock/${ticker}`);
       } else {
-        const res = await fetch(`/fetch-ticker/${ticker}`, { method: "POST" });
-        const result = await res.json();
-
-        if (result.status === "ok") {
-          const tickersRes = await fetch("/tickers");
-          const newTickers = await tickersRes.json();
-
-          setTickerOptions(newTickers); // ✅ fixed state update
+        const res = await api.post(`/fetch-ticker/${ticker}`);
+        if (res.data.status === "ok") {
+          const tickersRes = await api.get("/tickers");
+          setTickerOptions(tickersRes.data);
           navigate(`/stock/${ticker}`);
         } else {
           alert("Ticker not found");
@@ -34,6 +31,7 @@ const TickerDropdown = ({ options: initialOptions }) => {
       }
     } catch (err) {
       console.error("Error fetching ticker:", err);
+      alert("There was a problem fetching that ticker.");
     }
   };
 
